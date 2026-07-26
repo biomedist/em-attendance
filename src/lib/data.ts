@@ -183,31 +183,23 @@ export async function fetchAttendanceSummaryForWeek(weekDate: string): Promise<{
     return { studentPresent: 0, studentTotal: 0, teacherPresent: 0, teacherTotal: 0 };
   }
   const supabase = getSupabase();
-
-  const { data: students, error: studentsError } = await supabase
-    .from("students")
-    .select("id, group_id")
-    .eq("active", true);
-  if (studentsError) throw studentsError;
-
-  const studentIds = (students ?? []).filter((s) => s.group_id !== "TEACHER").map((s) => s.id);
-  const teacherIds = (students ?? []).filter((s) => s.group_id === "TEACHER").map((s) => s.id);
-
-  const { data: records, error: recordsError } = await supabase
+  const { data, error } = await supabase
     .from("attendance_records")
-    .select("student_id, status")
-    .eq("week_date", weekDate)
-    .eq("status", "present");
-  if (recordsError) throw recordsError;
+    .select("member_type, status")
+    .eq("week_date", weekDate);
+  if (error) throw error;
 
-  const presentIds = new Set((records ?? []).map((r) => r.student_id));
-
-  return {
-    studentPresent: studentIds.filter((id) => presentIds.has(id)).length,
-    studentTotal: studentIds.length,
-    teacherPresent: teacherIds.filter((id) => presentIds.has(id)).length,
-    teacherTotal: teacherIds.length,
-  };
+  let studentPresent = 0, studentTotal = 0, teacherPresent = 0, teacherTotal = 0;
+  (data ?? []).forEach((r) => {
+    if (r.member_type === "teacher") {
+      teacherTotal++;
+      if (r.status === "present") teacherPresent++;
+    } else {
+      studentTotal++;
+      if (r.status === "present") studentPresent++;
+    }
+  });
+  return { studentPresent, studentTotal, teacherPresent, teacherTotal };
 }
 
 export async function fetchMonthlyStats(): Promise<MonthlyStat[]> {

@@ -11,10 +11,13 @@ export async function saveAttendance(
 ): Promise<{ ok: boolean; error?: string }> {
   if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
   const supabase = getSupabase();
+  const memberType = groupId === "TEACHER" ? "teacher" : "student";
   const rows = records.map((r) => ({
     student_id: r.studentId,
     week_date: weekDate,
     status: r.status,
+    group_id: groupId,
+    member_type: memberType,
     updated_at: new Date().toISOString(),
   }));
   const { error } = await supabase
@@ -105,5 +108,48 @@ export async function updateGroupTeacher(
   const { error } = await supabase.from("groups").update({ teacher }).eq("id", id);
   if (error) return { ok: false, error: error.message };
   revalidatePath("/");
+  return { ok: true };
+}
+
+export async function addNotice(
+  date: string,
+  title: string,
+  type: "event" | "announcement" | "holiday",
+  description?: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("notices")
+    .insert([{ date, title, type, description: description ?? null }]);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/notice");
+  return { ok: true };
+}
+
+export async function updateNotice(
+  id: string,
+  date: string,
+  title: string,
+  type: "event" | "announcement" | "holiday",
+  description?: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("notices")
+    .update({ date, title, type, description: description ?? null })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/notice");
+  return { ok: true };
+}
+
+export async function deleteNotice(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const { error } = await supabase.from("notices").delete().eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/notice");
   return { ok: true };
 }
