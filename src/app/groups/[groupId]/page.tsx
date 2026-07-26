@@ -68,24 +68,12 @@ export default async function GroupPage({
           </Suspense>
         </div>
 
-        {students.length === 0 ? (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-stone-200/60">
-            <p className="text-stone-500">No students in this group yet.</p>
-            <button
-              type="button"
-              className="mt-3 text-sm font-medium text-amber-600 hover:text-amber-700"
-            >
-              + Add Student
-            </button>
-          </div>
-        ) : (
-          <AttendanceSheet
-            groupId={groupId}
-            weekDate={weekDate}
-            students={students}
-            initialRecords={initialRecords}
-          />
-        )}
+        <AttendanceSheet
+          groupId={groupId}
+          weekDate={weekDate}
+          students={students}
+          initialRecords={initialRecords}
+        />
       </main>
 
       <BottomNav />
