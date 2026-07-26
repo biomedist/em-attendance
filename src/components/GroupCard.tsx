@@ -4,7 +4,7 @@ import type { Group } from "@/lib/types";
 export function GroupCard({ group }: { group: Group }) {
   return (
     <Link
-      href={`/groups/${group.badgeLabel}`}
+      href={`/groups/${group.id}`}
       className={`group block rounded-2xl border ${group.borderColor} ${group.bgColor} p-4 transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]`}
     >
       <div className="flex items-start justify-between">
