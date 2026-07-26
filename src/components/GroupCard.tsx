@@ -4,17 +4,17 @@ import type { Group } from "@/lib/types";
 export function GroupCard({ group }: { group: Group }) {
   return (
     <Link
-      href={`/groups/${group.id}`}
+      href={`/groups/${group.badgeLabel}`}
       className={`group block rounded-2xl border ${group.borderColor} ${group.bgColor} p-4 transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]`}
     >
       <div className="flex items-start justify-between">
         <div
           className={`flex h-12 w-12 items-center justify-center rounded-xl bg-white/80 text-xl font-bold shadow-sm ${group.color}`}
         >
-          {group.id}
+          {group.badgeLabel}
         </div>
         <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-stone-600">
-          {group.studentCount} students
+          {group.studentCount} {group.memberLabel}
         </span>
       </div>
       <div className="mt-3">

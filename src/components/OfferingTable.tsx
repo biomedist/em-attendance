@@ -107,9 +107,10 @@ export function OfferingTable({
             <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => `${v / 10000}만`} />
             <Tooltip
-              formatter={(value: number, name: string) =>
-                name === "offering" ? [formatCurrency(value), "Offering"] : [value, "Attendance"]
-              }
+              formatter={(value, name) => {
+                const num = typeof value === "number" ? value : Number(value ?? 0);
+                return name === "offering" ? [formatCurrency(num), "Offering"] : [num, "Attendance"];
+              }}
             />
             <Legend />
             <Line yAxisId="left" type="monotone" dataKey="attendance" stroke="#f59e0b" strokeWidth={2} name="Attendance" />

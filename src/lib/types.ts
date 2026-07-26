@@ -6,6 +6,8 @@ export interface Group {
   name: string;
   teacher: string | null;
   studentCount: number;
+  badgeLabel: string;
+  memberLabel: string;
   color: string;
   bgColor: string;
   borderColor: string;

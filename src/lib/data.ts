@@ -52,11 +52,14 @@ type DbAttendance = {
 
 function toGroup(row: DbGroup, studentCount: number): Group {
   const style = getGroupStyle(row.id);
+  const isTeacherGroup = row.id === "TEACHER";
   return {
     id: row.id as GroupId,
     name: row.name,
     teacher: row.teacher,
     studentCount,
+    badgeLabel: isTeacherGroup ? "T" : row.id,
+    memberLabel: isTeacherGroup ? "teachers" : "students",
     ...style,
   };
 }
@@ -208,7 +211,7 @@ export async function fetchAttendanceSummaryForWeek(weekDate: string): Promise<{
 }
 
 export async function fetchMonthlyStats(): Promise<MonthlyStat[]> {
-  
+
   if (!isSupabaseConfigured()) return [];
   const supabase = getSupabase();
 
