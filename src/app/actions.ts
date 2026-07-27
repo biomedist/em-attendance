@@ -153,3 +153,16 @@ export async function deleteNotice(id: string): Promise<{ ok: boolean; error?: s
   revalidatePath("/notice");
   return { ok: true };
 }
+
+export async function updateGroupName(
+  id: string,
+  name: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const { error } = await supabase.from("groups").update({ name }).eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/");
+  revalidatePath("/groups/manage");
+  return { ok: true };
+}
