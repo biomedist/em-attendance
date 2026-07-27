@@ -18,6 +18,8 @@ export interface Student {
   groupId: GroupId;
   name: string;
   grade: string | null;
+  dob: string | null;
+  contactInfo: string | null;
 }
 
 export interface AttendanceRecord {
