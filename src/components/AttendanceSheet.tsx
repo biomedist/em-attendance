@@ -30,6 +30,8 @@ export function AttendanceSheet({
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
   const [newGrade, setNewGrade] = useState("");
+  const [newDob, setNewDob] = useState("");
+  const [newContact, setNewContact] = useState("");
 
   const presentCount = Object.values(statuses).filter((s) => s === "present").length;
 
@@ -52,9 +54,17 @@ export function AttendanceSheet({
   function handleAddStudent() {
     if (!newName.trim()) return;
     startTransition(async () => {
-      await addStudent(groupId, newName.trim(), newGrade.trim() || undefined);
+      await addStudent(
+        groupId,
+        newName.trim(),
+        newGrade.trim() || undefined,
+        newDob || undefined,
+        newContact.trim() || undefined
+      );
       setNewName("");
       setNewGrade("");
+      setNewDob("");
+      setNewContact("");
       setShowAddForm(false);
     });
   }
@@ -97,8 +107,15 @@ export function AttendanceSheet({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-stone-800">{student.name}</p>
-                {student.grade && (
-                  <p className="text-xs font-semibold text-stone-600">Grade {student.grade}</p>
+                {(student.grade || student.dob) && (
+                  <p className="text-xs font-semibold text-stone-600">
+                    {student.grade && `Grade ${student.grade}`}
+                    {student.grade && student.dob && " · "}
+                    {student.dob}
+                  </p>
+                )}
+                {student.contactInfo && (
+                  <p className="text-xs text-stone-400">{student.contactInfo}</p>
                 )}
               </div>
               <button
@@ -144,6 +161,20 @@ export function AttendanceSheet({
               value={newGrade}
               onChange={(e) => setNewGrade(e.target.value)}
               placeholder="Grade (optional)"
+              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            />
+            <input
+              type="date"
+              value={newDob}
+              onChange={(e) => setNewDob(e.target.value)}
+              placeholder="Date of birth (optional)"
+              className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            />
+            <input
+              type="text"
+              value={newContact}
+              onChange={(e) => setNewContact(e.target.value)}
+              placeholder="Contact info (optional)"
               className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
             />
             <div className="flex gap-2">
