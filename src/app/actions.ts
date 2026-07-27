@@ -168,3 +168,28 @@ export async function updateGroupName(
   revalidatePath("/groups/manage");
   return { ok: true };
 }
+
+export async function updateStudent(
+  id: string,
+  groupId: string,
+  name: string,
+  grade?: string,
+  dob?: string,
+  contactInfo?: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("students")
+    .update({
+      name,
+      grade: grade ?? null,
+      dob: dob ?? null,
+      contact_info: contactInfo ?? null,
+    })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/");
+  return { ok: true };
+}
