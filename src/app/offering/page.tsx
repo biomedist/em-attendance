@@ -50,6 +50,7 @@ export default async function OfferingPage({
           </Suspense>
         </div>
         <OfferingTable
+          key={weekDate}
           weekDate={weekDate}
           initialAmount={offering?.amount ?? 0}
           summary={summary}
