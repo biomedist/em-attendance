@@ -28,6 +28,8 @@ type DbStudent = {
   group_id: string;
   name: string;
   grade: string | null;
+  dob: string | null;
+  contact_info: string | null;
   sort_order: number;
 };
 
@@ -70,6 +72,8 @@ function toStudent(row: DbStudent): Student {
     groupId: row.group_id as GroupId,
     name: row.name,
     grade: row.grade,
+    dob: row.dob,
+    contactInfo: row.contact_info,
   };
 }
 
