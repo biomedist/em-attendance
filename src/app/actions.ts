@@ -49,13 +49,15 @@ export async function saveOffering(
 export async function addStudent(
   groupId: string,
   name: string,
-  grade?: string
+  grade?: string,
+  dob?: string,
+  contactInfo?: string
 ): Promise<{ ok: boolean; error?: string }> {
   if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
   const supabase = getSupabase();
   const { error } = await supabase
     .from("students")
-    .insert([{ group_id: groupId, name, grade: grade ?? null }]);
+    .insert([{ group_id: groupId, name, grade: grade ?? null, dob: dob ?? null, contact_info: contactInfo ?? null }]);
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/");
