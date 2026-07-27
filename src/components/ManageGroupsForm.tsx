@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addGroup, removeGroup, updateGroupTeacher } from "@/app/actions";
+import { addGroup, removeGroup, updateGroupName, updateGroupTeacher } from "@/app/actions";
 import type { Group } from "@/lib/types";
 
 export function ManageGroupsForm({ groups }: { groups: Group[] }) {
@@ -9,6 +9,7 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
   const [newId, setNewId] = useState("");
   const [newName, setNewName] = useState("");
   const [newTeacher, setNewTeacher] = useState("");
+  const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
   const [teacherEdits, setTeacherEdits] = useState<Record<string, string>>({});
 
   function handleAdd() {
@@ -28,11 +29,12 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
     });
   }
 
-  function handleUpdateTeacher(id: string) {
+  function handleSaveGroup(id: string) {
+    const name = nameEdits[id];
     const teacher = teacherEdits[id];
-    if (teacher === undefined) return;
     startTransition(async () => {
-      await updateGroupTeacher(id, teacher);
+      if (name !== undefined) await updateGroupName(id, name);
+      if (teacher !== undefined) await updateGroupTeacher(id, teacher);
     });
   }
 
@@ -42,7 +44,7 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
         <div key={group.id} className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200/60">
           <div className="mb-2 flex items-center justify-between">
             <div className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold ${group.bgColor} ${group.color}`}>
-              {group.id}
+              {group.badgeLabel}
             </div>
             <button
               type="button"
@@ -52,23 +54,31 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
               Delete
             </button>
           </div>
-          <p className="mb-2 text-sm font-medium text-stone-800">{group.name}</p>
-          <div className="flex gap-2">
+          <div className="space-y-2">
             <input
               type="text"
-              defaultValue={group.teacher ?? ""}
-              onChange={(e) => setTeacherEdits((prev) => ({ ...prev, [group.id]: e.target.value }))}
-              placeholder="Teacher name"
-              className="flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none"
+              defaultValue={group.name}
+              onChange={(e) => setNameEdits((prev) => ({ ...prev, [group.id]: e.target.value }))}
+              placeholder="Group name"
+              className="w-full rounded-lg border border-stone-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none"
             />
-            <button
-              type="button"
-              onClick={() => handleUpdateTeacher(group.id)}
-              disabled={isPending}
-              className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white"
-            >
-              Save
-            </button>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                defaultValue={group.teacher ?? ""}
+                onChange={(e) => setTeacherEdits((prev) => ({ ...prev, [group.id]: e.target.value }))}
+                placeholder="Teacher name"
+                className="flex-1 rounded-lg border border-stone-200 px-3 py-1.5 text-sm focus:border-amber-400 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => handleSaveGroup(group.id)}
+                disabled={isPending}
+                className="rounded-lg bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       ))}
