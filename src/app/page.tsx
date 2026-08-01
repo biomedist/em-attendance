@@ -36,10 +36,6 @@ export default async function HomePage() {
         }
       />
 
-      <p className="mx-4 mt-2 text-xs text-red-500">DEBUG server now: {new Date().toISOString()}</p>
-
-
-
       
       {!configured && <SetupBanner />}
 
