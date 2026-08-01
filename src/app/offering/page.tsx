@@ -12,6 +12,7 @@ import {
 } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
+export const dynamic = "force-dynamic";
 export default async function OfferingPage({
   searchParams,
 }: {
