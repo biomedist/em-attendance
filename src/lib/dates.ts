@@ -1,14 +1,17 @@
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
 function toDateStr(d: Date): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
+/** Returns the Sunday (week key) for a given date as YYYY-MM-DD, based on Korea time */
 export function getSundayDate(date = new Date()): string {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay());
-  return toDateStr(d);
+  const kst = new Date(date.getTime() + KST_OFFSET_MS);
+  kst.setUTCDate(kst.getUTCDate() - kst.getUTCDay());
+  return toDateStr(kst);
 }
 
 export function formatWeekLabel(dateStr: string): string {
