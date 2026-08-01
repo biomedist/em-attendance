@@ -8,6 +8,7 @@ import { fetchGroups } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import type { Group } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const configured = isSupabaseConfigured();
   let groups: Group[] = [];
