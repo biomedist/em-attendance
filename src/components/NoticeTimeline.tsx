@@ -129,7 +129,7 @@ export function NoticeTimeline({ notices }: { notices: Notice[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const sorted = [...notices].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   function handleAdd(form: FormState) {
