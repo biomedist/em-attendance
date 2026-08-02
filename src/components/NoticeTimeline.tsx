@@ -116,7 +116,7 @@ function NoticeItem({
         </div>
         <h3 className="font-semibold text-stone-800">{notice.title}</h3>
         {notice.description && (
-          <p className="mt-2 text-sm leading-relaxed text-stone-600">{notice.description}</p>
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-600">{notice.description}</p>
         )}
       </div>
     </li>
