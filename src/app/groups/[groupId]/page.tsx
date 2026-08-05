@@ -37,15 +37,17 @@ export default async function GroupPage({
     );
   }
 
-  const group = await fetchGroupById(groupId);
+  const [group, students] = await Promise.all([
+    fetchGroupById(groupId),
+    fetchStudentsByGroup(groupId),
+  ]);
   if (!group) notFound();
-
-  const students = await fetchStudentsByGroup(groupId);
   const records = await fetchAttendanceForWeek(
     weekDate,
     students.map((s) => s.id)
   );
 
+  
   const initialRecords = Object.fromEntries(
     records.map((r) => [r.studentId, r.status])
   ) as Record<string, AttendanceStatus>;
