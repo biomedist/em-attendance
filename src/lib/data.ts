@@ -110,9 +110,22 @@ export async function fetchGroups(): Promise<Group[]> {
 }
 
 export async function fetchGroupById(groupId: string): Promise<Group | null> {
-  const groups = await fetchGroups();
-  return groups.find((g) => g.id === groupId) ?? null;
+  if (!isSupabaseConfigured()) return null;
+  const supabase = getSupabase();
+
+  const [{ data: groupRow, error: groupError }, { data: students, error: studentsError }] =
+    await Promise.all([
+      supabase.from("groups").select("*").eq("id", groupId).single(),
+      supabase.from("students").select("group_id").eq("group_id", groupId).eq("active", true),
+    ]);
+
+  if (groupError || !groupRow) return null;
+  if (studentsError) throw studentsError;
+
+  return toGroup(groupRow as DbGroup, (students ?? []).length);
 }
+
+
 
 export async function fetchStudentsByGroup(groupId: string): Promise<Student[]> {
   if (!isSupabaseConfigured()) return [];
