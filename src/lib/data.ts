@@ -331,4 +331,35 @@ export async function fetchYearlyAttendanceStats(
           const presentCount = presentByStudent[s.id] ?? 0;
           const percentage =
             totalWeeks > 0 ? Math.round((presentCount / totalWeeks) * 100) : 0;
-          return {
+          return {studentId: s.id,
+            name: s.name,
+            groupId: g.id,
+            presentCount,
+            totalWeeks,
+            percentage,
+          };
+        })
+        .sort((a, b) => b.percentage - a.percentage);
+
+      return {
+        groupId: g.id,
+        groupName: g.name,
+        students: groupStudents,
+      };
+    });
+}
+
+export async function updateStudentSortOrder(
+  updates: { id: string; sort_order: number }[]
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Not configured" };
+  const supabase = getSupabase();
+  const results = await Promise.all(
+    updates.map((u) =>
+      supabase.from("students").update({ sort_order: u.sort_order }).eq("id", u.id)
+    )
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, error: failed.error.message };
+  return { ok: true };
+}
