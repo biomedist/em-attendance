@@ -9,10 +9,12 @@ import {
   fetchAttendanceSummaryForWeek,
   fetchMonthlyStats,
   fetchOfferingForWeek,
+  fetchYearlyAttendanceStats,
 } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
+
 export default async function OfferingPage({
   searchParams,
 }: {
@@ -21,6 +23,7 @@ export default async function OfferingPage({
   const { week } = await searchParams;
   const weekDate = week ?? getSundayDate();
   const configured = isSupabaseConfigured();
+  const currentYear = new Date().getFullYear();
 
   if (!configured) {
     return (
@@ -32,16 +35,16 @@ export default async function OfferingPage({
     );
   }
 
-  const [offering, summary, monthlyStats] = await Promise.all([
+  const [offering, summary, monthlyStats, yearlyStats] = await Promise.all([
     fetchOfferingForWeek(weekDate),
     fetchAttendanceSummaryForWeek(weekDate),
     fetchMonthlyStats(),
+    fetchYearlyAttendanceStats(currentYear),
   ]);
 
   return (
     <div className="flex min-h-full flex-col bg-stone-50">
       <AppHeader title="Weekly Offering" subtitle="Sunday offering & attendance" />
-
       <main className="mx-auto w-full max-w-lg flex-1 px-4 pb-28 pt-4">
         <div className="mb-4">
           <Suspense
@@ -56,9 +59,10 @@ export default async function OfferingPage({
           initialAmount={offering?.amount ?? 0}
           summary={summary}
           monthlyStats={monthlyStats}
+          yearlyStats={yearlyStats}
+          currentYear={currentYear}
         />
       </main>
-
       <BottomNav />
     </div>
   );
