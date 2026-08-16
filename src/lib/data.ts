@@ -265,3 +265,70 @@ export async function fetchMonthlyStats(): Promise<MonthlyStat[]> {
     offering: offeringByMonth[m] ?? 0,
   }));
 }
+
+
+export type StudentAttendanceStat = {
+  studentId: string;
+  name: string;
+  groupId: string;
+  presentCount: number;
+  totalWeeks: number;
+  percentage: number;
+};
+
+export type GroupAttendanceStat = {
+  groupId: string;
+  groupName: string;
+  students: StudentAttendanceStat[];
+};
+
+export async function fetchYearlyAttendanceStats(
+  year: number
+): Promise<GroupAttendanceStat[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = getSupabase();
+
+  const startDate = `${year}-01-01`;
+  const endDate = `${year}-12-31`;
+
+  const [
+    { data: groups, error: groupsError },
+    { data: students, error: studentsError },
+    { data: records, error: recordsError },
+  ] = await Promise.all([
+    supabase.from("groups").select("id, name").order("sort_order"),
+    supabase.from("students").select("id, name, group_id").eq("active", true),
+    supabase
+      .from("attendance_records")
+      .select("student_id, week_date, status")
+      .gte("week_date", startDate)
+      .lte("week_date", endDate),
+  ]);
+
+  if (groupsError) throw groupsError;
+  if (studentsError) throw studentsError;
+  if (recordsError) throw recordsError;
+
+  // 전체 주차 수 계산 (해당 연도에 기록된 고유 week_date 개수)
+  const allWeeks = new Set((records ?? []).map((r) => r.week_date));
+  const totalWeeks = allWeeks.size;
+
+  // 학생별 출석 횟수
+  const presentByStudent: Record<string, number> = {};
+  (records ?? []).forEach((r) => {
+    if (r.status === "present") {
+      presentByStudent[r.student_id] = (presentByStudent[r.student_id] ?? 0) + 1;
+    }
+  });
+
+  // 그룹별로 묶기 (TEACHER 제외)
+  return (groups ?? [])
+    .filter((g) => g.id !== "TEACHER")
+    .map((g) => {
+      const groupStudents = (students ?? [])
+        .filter((s) => s.group_id === g.id)
+        .map((s) => {
+          const presentCount = presentByStudent[s.id] ?? 0;
+          const percentage =
+            totalWeeks > 0 ? Math.round((presentCount / totalWeeks) * 100) : 0;
+          return {
