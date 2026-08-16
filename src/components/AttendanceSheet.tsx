@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { saveAttendance, addStudent, removeStudent, updateStudent } from "@/app/actions";
+import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents } from "@/app/actions";
 import type { AttendanceStatus, Student } from "@/lib/types";
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string; activeClass: string }[] = [
@@ -108,6 +108,8 @@ export function AttendanceSheet({
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>(() =>
     Object.fromEntries(students.map((s) => [s.id, initialRecords[s.id] ?? DEFAULT_STATUS]))
   );
+  const [orderedStudents, setOrderedStudents] = useState<Student[]>(students);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -124,9 +126,31 @@ export function AttendanceSheet({
     setMessage(null);
   }
 
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === index) return;
+    const next = [...orderedStudents];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(index, 0, moved);
+    setOrderedStudents(next);
+    setDragIndex(index);
+  }
+
+  function handleDragEnd() {
+    setDragIndex(null);
+    const updates = orderedStudents.map((s, i) => ({ id: s.id, sort_order: i + 1 }));
+    startTransition(async () => {
+      await reorderStudents(updates);
+    });
+  }
+
   function handleSave() {
     startTransition(async () => {
-      const records = students.map((s) => ({
+      const records = orderedStudents.map((s) => ({
         studentId: s.id,
         status: statuses[s.id] ?? DEFAULT_STATUS,
       }));
@@ -162,12 +186,13 @@ export function AttendanceSheet({
 
   return (
     <div>
+      {/* 출석 요약 헤더 */}
       <div className="mb-4 flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-200/60">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-stone-400">Attendance</p>
           <p className="text-lg font-semibold text-stone-800">
             {presentCount}
-            <span className="text-sm font-normal text-stone-400"> / {students.length}</span>
+            <span className="text-sm font-normal text-stone-400"> / {orderedStudents.length}</span>
           </p>
         </div>
         <div className="flex gap-3 text-xs text-stone-500">
@@ -182,35 +207,97 @@ export function AttendanceSheet({
         </div>
       </div>
 
-// 파일 상단 import에 reorderStudents 추가
-import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents } from "@/app/actions";
+      {/* 학생 목록 */}
+      <ul className="space-y-2">
+        {orderedStudents.map((student, index) =>
+          editingId === student.id ? (
+            <li key={student.id} className="rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200/60">
+              <StudentEditForm
+                student={student}
+                groupId={groupId}
+                onCancel={() => setEditingId(null)}
+                isPending={isPending}
+                startTransition={startTransition}
+              />
+            </li>
+          ) : (
+            <li
+              key={student.id}
+              draggable
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200/60 transition-opacity ${
+                dragIndex === index ? "opacity-50" : "opacity-100"
+              }`}
+            >
+              <div className="mb-2.5 flex items-center gap-2">
+                {/* 드래그 핸들 */}
+                <span className="cursor-grab shrink-0 text-stone-300 active:cursor-grabbing">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                  </svg>
+                </span>
+                {/* 번호 */}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-xs font-semibold text-stone-500">
+                  {index + 1}
+                </span>
+                {/* 이름/학년/연락처 */}
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-stone-800">{student.name}</p>
+                  {(student.grade || student.dob) && (
+                    <p className="text-xs font-semibold text-stone-600">
+                      {student.grade && `Grade ${student.grade}`}
+                      {student.grade && student.dob && " · "}
+                      {student.dob}
+                    </p>
+                  )}
+                  {student.contactInfo && (
+                    <p className="text-xs text-stone-400">{student.contactInfo}</p>
+                  )}
+                </div>
+                {/* Edit/Remove 버튼 */}
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(student.id)}
+                    className="rounded-lg px-2 py-1 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-700"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveStudent(student.id)}
+                    className="rounded-lg px-2 py-1 text-xs text-red-400 hover:bg-red-50 hover:text-red-600"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
 
-// AttendanceSheet 함수 안, statuses useState 아래에 추가:
-const [orderedStudents, setOrderedStudents] = useState(students);
-const [dragIndex, setDragIndex] = useState<number | null>(null);
+              {/* 출석 버튼 */}
+              <div className="flex gap-1">
+                {STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setStatus(student.id, opt.value)}
+                    className={`flex-1 rounded-lg py-1.5 text-[11px] font-medium transition-all ${
+                      statuses[student.id] === opt.value
+                        ? opt.activeClass
+                        : "bg-stone-50 text-stone-500 hover:bg-stone-100"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </li>
+          )
+        )}
+      </ul>
 
-function handleDragStart(index: number) {
-  setDragIndex(index);
-}
-
-function handleDragOver(e: React.DragEvent, index: number) {
-  e.preventDefault();
-  if (dragIndex === null || dragIndex === index) return;
-  const next = [...orderedStudents];
-  const [moved] = next.splice(dragIndex, 1);
-  next.splice(index, 0, moved);
-  setOrderedStudents(next);
-  setDragIndex(index);
-}
-
-function handleDragEnd() {
-  setDragIndex(null);
-  const updates = orderedStudents.map((s, i) => ({ id: s.id, sort_order: i + 1 }));
-  startTransition(async () => {
-    await reorderStudents(updates);
-  });
-}
-
+      {/* 추가 폼 */}
       <div className="mt-3">
         {showAddForm ? (
           <div className="space-y-2 rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200/60">
