@@ -193,3 +193,18 @@ export async function updateStudent(
   revalidatePath("/");
   return { ok: true };
 }
+
+export async function reorderStudents(
+  updates: { id: string; sort_order: number }[]
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+  const results = await Promise.all(
+    updates.map((u) =>
+      supabase.from("students").update({ sort_order: u.sort_order }).eq("id", u.id)
+    )
+  );
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, error: failed.error.message };
+  return { ok: true };
+}
