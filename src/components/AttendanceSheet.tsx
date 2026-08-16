@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents } from "@/app/actions";
 import type { AttendanceStatus, Student } from "@/lib/types";
 
@@ -126,10 +127,11 @@ export function AttendanceSheet({
     setMessage(null);
   }
 
+  // 드래그 (PC)
   function handleDragStart(index: number) {
     setDragIndex(index);
   }
-
+  
   function handleDragOver(e: React.DragEvent, index: number) {
     e.preventDefault();
     if (dragIndex === null || dragIndex === index) return;
@@ -139,13 +141,65 @@ export function AttendanceSheet({
     setOrderedStudents(next);
     setDragIndex(index);
   }
-
+  
   function handleDragEnd() {
     setDragIndex(null);
     const updates = orderedStudents.map((s, i) => ({ id: s.id, sort_order: i + 1 }));
     startTransition(async () => {
       await reorderStudents(updates);
     });
+  }
+  
+  // 터치 (모바일) - 롱프레스 후 드래그
+  const touchDragIndex = React.useRef<number | null>(null);
+  const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isDraggingTouch, setIsDraggingTouch] = useState(false);
+  
+  function handleTouchStart(e: React.TouchEvent, index: number) {
+    longPressTimer.current = setTimeout(() => {
+      touchDragIndex.current = index;
+      setDragIndex(index);
+      setIsDraggingTouch(true);
+      // 진동 피드백 (지원하는 기기에서)
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 400); // 400ms 롱프레스
+  }
+  
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!isDraggingTouch || touchDragIndex.current === null) {
+      // 롱프레스 전에 움직이면 타이머 취소
+      if (longPressTimer.current) clearTimeout(longPressTimer.current);
+      return;
+    }
+    e.preventDefault();
+  
+    const touch = e.touches[0];
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    const liEl = elements.find((el) => el.getAttribute("data-student-index") !== null);
+    if (!liEl) return;
+  
+    const targetIndex = Number(liEl.getAttribute("data-student-index"));
+    if (targetIndex === touchDragIndex.current) return;
+  
+    const next = [...orderedStudents];
+    const [moved] = next.splice(touchDragIndex.current, 1);
+    next.splice(targetIndex, 0, moved);
+    setOrderedStudents(next);
+    touchDragIndex.current = targetIndex;
+    setDragIndex(targetIndex);
+  }
+  
+  function handleTouchEnd() {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    if (isDraggingTouch) {
+      setIsDraggingTouch(false);
+      setDragIndex(null);
+      touchDragIndex.current = null;
+      const updates = orderedStudents.map((s, i) => ({ id: s.id, sort_order: i + 1 }));
+      startTransition(async () => {
+        await reorderStudents(updates);
+      });
+    }
   }
 
   function handleSave() {
@@ -223,13 +277,18 @@ export function AttendanceSheet({
           ) : (
             <li
               key={student.id}
+              data-student-index={index}
               draggable
               onDragStart={() => handleDragStart(index)}
               onDragOver={(e) => handleDragOver(e, index)}
               onDragEnd={handleDragEnd}
+              onTouchStart={(e) => handleTouchStart(e, index)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               className={`rounded-xl bg-white p-3 shadow-sm ring-1 ring-stone-200/60 transition-opacity ${
                 dragIndex === index ? "opacity-50" : "opacity-100"
               }`}
+              style={{ touchAction: isDraggingTouch ? "none" : "auto" }}
             >
               <div className="mb-2.5 flex items-center gap-2">
                 {/* 드래그 핸들 */}
