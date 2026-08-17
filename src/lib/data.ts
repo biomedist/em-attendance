@@ -181,10 +181,14 @@ export async function fetchNotices(): Promise<Notice[]> {
   if (!isSupabaseConfigured()) return [];
 
   const supabase = getSupabase();
+  const thisYear = new Date().getFullYear();
+  const startDate = `${thisYear}-01-01`;
+
   const { data, error } = await supabase
     .from("notices")
     .select("*")
-    .order("date");
+    .gte("date", startDate)
+    .order("date", { ascending: false });
 
   if (error) throw error;
   return (data as DbNotice[]).map(toNotice);
