@@ -318,7 +318,7 @@ export function AttendanceSheet({
                     </p>
                   )}
                   {student.contactInfo && (
-  
+                    <a
                       href={`tel:${student.contactInfo.replace(/\D/g, "")}`}
                       className="text-xs text-sky-500 hover:text-sky-600"
                       onClick={(e) => e.stopPropagation()}
