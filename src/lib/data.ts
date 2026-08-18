@@ -251,10 +251,23 @@ export async function fetchMonthlyStats(): Promise<MonthlyStat[]> {
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
 
-  const attendanceByMonth: Record<string, number> = {};
+    // 주차별 출석 인원 집계
+  const weekAttendance: Record<string, Record<string, number>> = {};
   (records ?? []).forEach((r) => {
-    const key = r.week_date.slice(0, 7);
-    attendanceByMonth[key] = (attendanceByMonth[key] ?? 0) + 1;
+    const monthKey = r.week_date.slice(0, 7);
+    if (!weekAttendance[monthKey]) weekAttendance[monthKey] = {};
+    weekAttendance[monthKey][r.week_date] =
+      (weekAttendance[monthKey][r.week_date] ?? 0) + 1;
+  });
+
+  // 월별 주간 평균 계산
+  const attendanceByMonth: Record<string, number> = {};
+  Object.entries(weekAttendance).forEach(([month, weeks]) => {
+    const weekCounts = Object.values(weeks);
+    const avg = weekCounts.length > 0
+      ? Math.round(weekCounts.reduce((s, n) => s + n, 0) / weekCounts.length)
+      : 0;
+    attendanceByMonth[month] = avg;
   });
 
   const offeringByMonth: Record<string, number> = {};
