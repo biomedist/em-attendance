@@ -22,6 +22,7 @@ function StudentEditForm({
   student,
   groupId,
   onCancel,
+  onSaved,
   isPending,
   startTransition,
 }: {
