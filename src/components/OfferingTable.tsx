@@ -219,7 +219,8 @@ export function OfferingTable({
             <Tooltip
               formatter={(value, name) => {
                 const num = typeof value === "number" ? value : Number(value ?? 0);
-                return name === "offering" ? [formatCurrency(num), "Offering"] : [`${num}명`, "주간 평균"];
+                if (name === "Offering") return [`${formatCurrency(num)} (합계)`, "Offering"];
+                return [`${num}명`, "주간 평균"];
               }}
             />
             <Legend />
