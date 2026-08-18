@@ -72,6 +72,7 @@ function StudentEditForm({
         value={dob}
         onChange={(e) => setDob(e.target.value)}
         className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
+      />  
       <input
         type="tel"
         value={contact}
