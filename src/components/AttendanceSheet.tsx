@@ -28,6 +28,7 @@ function StudentEditForm({
   student: Student;
   groupId: string;
   onCancel: () => void;
+  onSaved: (updated: Student) => void;
   isPending: boolean;
   startTransition: (fn: () => Promise<void>) => void;
 }) {
@@ -47,6 +48,13 @@ function StudentEditForm({
         dob || undefined,
         contact.trim() || undefined
       );
+      onSaved({
+        ...student,
+        name: name.trim(),
+        grade: grade.trim() || null,
+        dob: dob || null,
+        contactInfo: contact.trim() || null,
+      });
       onCancel();
     });
   }
@@ -243,7 +251,11 @@ export function AttendanceSheet({
       await removeStudent(studentId, groupId);
     });
   }
-
+  function handleStudentUpdated(updated: Student) {
+  setOrderedStudents((prev) =>
+    prev.map((s) => (s.id === updated.id ? updated : s))
+  );
+}
   return (
     <div>
       {/* 출석 요약 헤더 */}
@@ -276,6 +288,7 @@ export function AttendanceSheet({
                 student={student}
                 groupId={groupId}
                 onCancel={() => setEditingId(null)}
+                onSaved={handleStudentUpdated}
                 isPending={isPending}
                 startTransition={startTransition}
               />
