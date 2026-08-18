@@ -214,16 +214,16 @@ export function OfferingTable({
           <LineChart data={monthlyStats} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0eee9" />
             <XAxis dataKey="month" tick={{ fontSize: 10 }} tickFormatter={(m) => m.slice(5)} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
+            <YAxis yAxisId="left" tick={{ fontSize: 10 }} tickFormatter={(v) => `${v}명`} />
             <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => `${v / 10000}만`} />
             <Tooltip
               formatter={(value, name) => {
                 const num = typeof value === "number" ? value : Number(value ?? 0);
-                return name === "offering" ? [formatCurrency(num), "Offering"] : [num, "Attendance"];
+                return name === "offering" ? [formatCurrency(num), "Offering"] : [`${num}명`, "주간 평균"];
               }}
             />
             <Legend />
-            <Line yAxisId="left" type="monotone" dataKey="attendance" stroke="#f59e0b" strokeWidth={2} name="Attendance" />
+            <Line yAxisId="left" type="monotone" dataKey="attendance" stroke="#f59e0b" strokeWidth={2} name="Avg Attendance" />
             <Line yAxisId="right" type="monotone" dataKey="offering" stroke="#0ea5e9" strokeWidth={2} name="Offering" />
           </LineChart>
         </ResponsiveContainer>
