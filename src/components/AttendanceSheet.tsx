@@ -4,6 +4,13 @@ import React, { useState, useTransition } from "react";
 import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents } from "@/app/actions";
 import type { AttendanceStatus, Student } from "@/lib/types";
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length < 4) return digits;
+  if (digits.length < 8) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string; activeClass: string }[] = [
   { value: "present", label: "Present", activeClass: "bg-emerald-500 text-white shadow-sm" },
   { value: "absent", label: "Absent", activeClass: "bg-stone-400 text-white shadow-sm" },
@@ -65,12 +72,11 @@ function StudentEditForm({
         value={dob}
         onChange={(e) => setDob(e.target.value)}
         className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
-      />
       <input
-        type="text"
+        type="tel"
         value={contact}
-        onChange={(e) => setContact(e.target.value)}
-        placeholder="Contact info (optional)"
+        onChange={(e) => setContact(formatPhone(e.target.value))}
+        placeholder="010-0000-0000"
         className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none"
       />
       <div className="flex gap-2">
@@ -311,7 +317,13 @@ export function AttendanceSheet({
                     </p>
                   )}
                   {student.contactInfo && (
-                    <p className="text-xs text-stone-400">{student.contactInfo}</p>
+  
+                      href={`tel:${student.contactInfo.replace(/\D/g, "")}`}
+                      className="text-xs text-sky-500 hover:text-sky-600"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {student.contactInfo}
+                    </a>
                   )}
                 </div>
                 {/* Edit/Remove 버튼 */}
@@ -380,10 +392,10 @@ export function AttendanceSheet({
               className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
             />
             <input
-              type="text"
+              type="tel"
               value={newContact}
-              onChange={(e) => setNewContact(e.target.value)}
-              placeholder="Contact info (optional)"
+              onChange={(e) => setNewContact(formatPhone(e.target.value))}
+              placeholder="010-0000-0000"
               className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
             />
             <div className="flex gap-2">
