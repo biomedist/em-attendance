@@ -72,6 +72,7 @@ export default async function GroupPage({
         </div>
 
         <AttendanceSheet
+          key={weekDate}
           groupId={groupId}
           weekDate={weekDate}
           students={students}
