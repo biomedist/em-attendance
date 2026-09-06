@@ -115,11 +115,13 @@ export function AttendanceSheet({
   weekDate,
   students,
   initialRecords,
+  allGroups,
 }: {
   groupId: string;
   weekDate: string;
   students: Student[];
   initialRecords: Record<string, AttendanceStatus>;
+  allGroups: { id: string; name: string }[];
 }) {
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>(() =>
     Object.fromEntries(students.map((s) => [s.id, initialRecords[s.id] ?? DEFAULT_STATUS]))
