@@ -52,11 +52,10 @@ export async function addStudent(
   grade?: string,
   dob?: string,
   contactInfo?: string
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; student?: { id: string; groupId: string; name: string; grade: string | null; dob: string | null; contactInfo: string | null } }> {
   if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
   const supabase = getSupabase();
 
-  // 현재 그룹의 최대 sort_order 조회
   const { data: existing } = await supabase
     .from("students")
     .select("sort_order")
@@ -67,7 +66,7 @@ export async function addStudent(
 
   const maxOrder = existing?.[0]?.sort_order ?? 0;
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("students")
     .insert([{
       group_id: groupId,
@@ -76,14 +75,26 @@ export async function addStudent(
       dob: dob ?? null,
       contact_info: contactInfo ?? null,
       sort_order: maxOrder + 1,
-    }]);
+    }])
+    .select()
+    .single();
 
   if (error) return { ok: false, error: error.message };
+
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/");
-  return { ok: true };
+  return {
+    ok: true,
+    student: {
+      id: data.id,
+      groupId: data.group_id,
+      name: data.name,
+      grade: data.grade,
+      dob: data.dob,
+      contactInfo: data.contact_info,
+    },
+  };
 }
-
 
 export async function moveStudent(
   studentId: string,
