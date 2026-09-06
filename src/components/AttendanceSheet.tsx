@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents } from "@/app/actions";
+import { saveAttendance, addStudent, removeStudent, updateStudent, reorderStudents, moveStudent } from "@/app/actions";
 import type { AttendanceStatus, Student } from "@/lib/types";
 
 function formatPhone(value: string): string {
@@ -23,6 +23,8 @@ function StudentEditForm({
   groupId,
   onCancel,
   onSaved,
+  onMoved,
+  allGroups,
   isPending,
   startTransition,
 }: {
@@ -30,6 +32,8 @@ function StudentEditForm({
   groupId: string;
   onCancel: () => void;
   onSaved: (updated: Student) => void;
+  onMoved: (studentId: string) => void;
+  allGroups: { id: string; name: string }[];
   isPending: boolean;
   startTransition: (fn: () => Promise<void>) => void;
 }) {
@@ -37,6 +41,7 @@ function StudentEditForm({
   const [grade, setGrade] = useState(student.grade ?? "");
   const [dob, setDob] = useState(student.dob ?? "");
   const [contact, setContact] = useState(student.contactInfo ?? "");
+  const [targetGroup, setTargetGroup] = useState(groupId);
 
   function handleSave() {
     if (!name.trim()) return;
@@ -259,6 +264,9 @@ export function AttendanceSheet({
     prev.map((s) => (s.id === updated.id ? updated : s))
   );
 }
+  function handleStudentMoved(studentId: string) {
+  setOrderedStudents((prev) => prev.filter((s) => s.id !== studentId));
+}
   return (
     <div>
       {/* 출석 요약 헤더 */}
@@ -292,6 +300,8 @@ export function AttendanceSheet({
                 groupId={groupId}
                 onCancel={() => setEditingId(null)}
                 onSaved={handleStudentUpdated}
+                onMoved={handleStudentMoved}
+                allGroups={allGroups}
                 isPending={isPending}
                 startTransition={startTransition}
               />
@@ -415,6 +425,42 @@ export function AttendanceSheet({
               placeholder="010-0000-0000"
               className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-100"
             />
+            
+            {allGroups.filter((g) => g.id !== groupId).length > 0 && (
+              <div className="rounded-lg border border-stone-200 p-2">
+                <p className="mb-1.5 text-xs font-medium text-stone-500">그룹 이동</p>
+                <div className="flex gap-2">
+                  <select
+                    value={targetGroup}
+                    onChange={(e) => setTargetGroup(e.target.value)}
+                    className="flex-1 rounded-lg border border-stone-200 px-2 py-1.5 text-sm focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value={groupId}>현재 그룹 유지</option>
+                    {allGroups
+                      .filter((g) => g.id !== groupId)
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (targetGroup === groupId) return;
+                      if (!confirm(`${student.name}을(를) ${allGroups.find(g => g.id === targetGroup)?.name}으로 이동할까요?`)) return;
+                      startTransition(async () => {
+                        await moveStudent(student.id, groupId, targetGroup);
+                        onMoved(student.id);
+                      });
+                    }}
+                    disabled={targetGroup === groupId || isPending}
+                    className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+                  >
+                    이동
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <button
                 type="button"
