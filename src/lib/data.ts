@@ -380,3 +380,17 @@ export async function updateStudentSortOrder(
   if (failed?.error) return { ok: false, error: failed.error.message };
   return { ok: true };
 }
+
+
+export async function fetchGroupIds(): Promise<{ id: string; name: string }[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("groups")
+    .select("id, name")
+    .order("sort_order");
+  if (error) throw error;
+  return (data ?? []) as { id: string; name: string }[];
+}
+
+
