@@ -272,22 +272,26 @@ export function AttendanceSheet({
   }
 
   function handleAddStudent() {
-    if (!newName.trim()) return;
-    startTransition(async () => {
-      await addStudent(
-        groupId,
-        newName.trim(),
-        newGrade.trim() || undefined,
-        newDob || undefined,
-        newContact.trim() || undefined
-      );
-      setNewName("");
-      setNewGrade("");
-      setNewDob("");
-      setNewContact("");
-      setShowAddForm(false);
-    });
-  }
+  if (!newName.trim()) return;
+  startTransition(async () => {
+    const result = await addStudent(
+      groupId,
+      newName.trim(),
+      newGrade.trim() || undefined,
+      newDob || undefined,
+      newContact.trim() || undefined
+    );
+    if (result.ok && result.student) {
+      setOrderedStudents((prev) => [...prev, result.student!]);
+      setStatuses((prev) => ({ ...prev, [result.student!.id]: DEFAULT_STATUS }));
+    }
+    setNewName("");
+    setNewGrade("");
+    setNewDob("");
+    setNewContact("");
+    setShowAddForm(false);
+  });
+}
 
   function handleRemoveStudent(studentId: string) {
     if (!confirm("Remove this person from the group?")) return;
