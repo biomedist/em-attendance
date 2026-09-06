@@ -55,14 +55,67 @@ export async function addStudent(
 ): Promise<{ ok: boolean; error?: string }> {
   if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
   const supabase = getSupabase();
+
+  // 현재 그룹의 최대 sort_order 조회
+  const { data: existing } = await supabase
+    .from("students")
+    .select("sort_order")
+    .eq("group_id", groupId)
+    .eq("active", true)
+    .order("sort_order", { ascending: false })
+    .limit(1);
+
+  const maxOrder = existing?.[0]?.sort_order ?? 0;
+
   const { error } = await supabase
     .from("students")
-    .insert([{ group_id: groupId, name, grade: grade ?? null, dob: dob ?? null, contact_info: contactInfo ?? null }]);
+    .insert([{
+      group_id: groupId,
+      name,
+      grade: grade ?? null,
+      dob: dob ?? null,
+      contact_info: contactInfo ?? null,
+      sort_order: maxOrder + 1,
+    }]);
+
   if (error) return { ok: false, error: error.message };
   revalidatePath(`/groups/${groupId}`);
   revalidatePath("/");
   return { ok: true };
 }
+
+
+export async function moveStudent(
+  studentId: string,
+  fromGroupId: string,
+  toGroupId: string
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+
+  // 이동할 그룹의 최대 sort_order 조회
+  const { data: existing } = await supabase
+    .from("students")
+    .select("sort_order")
+    .eq("group_id", toGroupId)
+    .eq("active", true)
+    .order("sort_order", { ascending: false })
+    .limit(1);
+
+  const maxOrder = existing?.[0]?.sort_order ?? 0;
+
+  const { error } = await supabase
+    .from("students")
+    .update({ group_id: toGroupId, sort_order: maxOrder + 1 })
+    .eq("id", studentId);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath(`/groups/${fromGroupId}`);
+  revalidatePath(`/groups/${toGroupId}`);
+  revalidatePath("/");
+  return { ok: true };
+}
+
 
 export async function removeStudent(
   studentId: string,
