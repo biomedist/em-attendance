@@ -282,7 +282,7 @@ export function AttendanceSheet({
       newContact.trim() || undefined
     );
     if (result.ok && result.student) {
-      setOrderedStudents((prev) => [...prev, result.student!]);
+      setOrderedStudents((prev) => [...prev, result.student! as Student]);
       setStatuses((prev) => ({ ...prev, [result.student!.id]: DEFAULT_STATUS }));
     }
     setNewName("");
