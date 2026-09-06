@@ -294,11 +294,19 @@ export function AttendanceSheet({
 }
 
   function handleRemoveStudent(studentId: string) {
-    if (!confirm("Remove this person from the group?")) return;
-    startTransition(async () => {
-      await removeStudent(studentId, groupId);
-    });
-  }
+  if (!confirm("Remove this person from the group?")) return;
+  startTransition(async () => {
+    const result = await removeStudent(studentId, groupId);
+    if (result.ok) {
+      setOrderedStudents((prev) => prev.filter((s) => s.id !== studentId));
+      setStatuses((prev) => {
+        const next = { ...prev };
+        delete next[studentId];
+        return next;
+      });
+    }
+  });
+}
   function handleStudentUpdated(updated: Student) {
   setOrderedStudents((prev) =>
     prev.map((s) => (s.id === updated.id ? updated : s))
