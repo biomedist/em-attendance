@@ -10,6 +10,7 @@ import {
   fetchAttendanceForWeek,
   fetchGroupById,
   fetchStudentsByGroup,
+  fetchGroupIds,
 } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import type { AttendanceStatus } from "@/lib/types";
@@ -37,9 +38,10 @@ export default async function GroupPage({
     );
   }
 
-  const [group, students] = await Promise.all([
+  const [group, students, allGroups] = await Promise.all([
     fetchGroupById(groupId),
     fetchStudentsByGroup(groupId),
+    fetchGroupIds(),
   ]);
   if (!group) notFound();
   const records = await fetchAttendanceForWeek(
@@ -77,6 +79,7 @@ export default async function GroupPage({
           weekDate={weekDate}
           students={students}
           initialRecords={initialRecords}
+          allGroups={allGroups}
         />
       </main>
 
