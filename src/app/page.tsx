@@ -4,26 +4,31 @@ import { BottomNav } from "@/components/BottomNav";
 import { GroupCard } from "@/components/GroupCard";
 import { SetupBanner } from "@/components/SetupBanner";
 import { formatWeekLabel, getSundayDate } from "@/lib/dates";
-import { fetchGroups } from "@/lib/data";
+import { fetchGroups, fetchAttendanceCompletedGroups } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import type { Group } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const configured = isSupabaseConfigured();
   let groups: Group[] = [];
+  let completedGroups = new Set<string>();
   let error: string | null = null;
+  const weekDate = getSundayDate();
 
   if (configured) {
     try {
-      groups = await fetchGroups();
+      [groups, completedGroups] = await Promise.all([
+        fetchGroups(),
+        fetchAttendanceCompletedGroups(weekDate),
+      ]);
     } catch (e) {
       error = e instanceof Error ? e.message : "Failed to load groups";
     }
   }
 
   const totalStudents = groups.reduce((sum, g) => sum + g.studentCount, 0);
-  const weekDate = getSundayDate();
 
   return (
     <div className="flex min-h-full flex-col bg-stone-50">
@@ -36,7 +41,6 @@ export default async function HomePage() {
         }
       />
 
-      
       {!configured && <SetupBanner />}
 
       {error && (
@@ -57,17 +61,24 @@ export default async function HomePage() {
           </p>
         </section>
 
-        <Link
-          href="/groups/manage"
-          className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
-        >
-          Manage Groups
-        </Link>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-stone-700">Groups</h2>
+          <Link
+            href="/groups/manage"
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-700"
+          >
+            Manage Groups
+          </Link>
+        </div>
 
         {groups.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
             {groups.map((group) => (
-              <GroupCard key={group.id} group={group} />
+              <GroupCard
+                key={group.id}
+                group={group}
+                isCompleted={completedGroups.has(group.id)}
+              />
             ))}
           </div>
         ) : configured && !error ? (
