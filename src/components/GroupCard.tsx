@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { Group } from "@/lib/types";
 
-export function GroupCard({ group }: { group: Group }) {
+export function GroupCard({
+  group,
+  isCompleted,
+}: {
+  group: Group;
+  isCompleted: boolean;
+}) {
   return (
     <Link
       href={`/groups/${group.id}`}
@@ -13,9 +19,24 @@ export function GroupCard({ group }: { group: Group }) {
         >
           {group.badgeLabel}
         </div>
-        <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-stone-600">
-          {group.studentCount} {group.memberLabel}
-        </span>
+        <div className="flex items-center gap-2">
+          {/* 완료 뱃지 */}
+          {isCompleted ? (
+            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+              Done!
+            </span>
+          ) : (
+            <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-amber-600">
+              Pending
+            </span>
+          )}
+          <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-stone-600">
+            {group.studentCount} {group.memberLabel}
+          </span>
+        </div>
       </div>
       <div className="mt-3">
         <h3 className={`text-base font-semibold ${group.color}`}>
