@@ -394,3 +394,20 @@ export async function fetchGroupIds(): Promise<{ id: string; name: string }[]> {
 }
 
 
+export async function fetchAttendanceCompletedGroups(
+  weekDate: string
+): Promise<Set<string>> {
+  if (!isSupabaseConfigured()) return new Set();
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from("attendance_records")
+    .select("group_id")
+    .eq("week_date", weekDate);
+
+  if (error) throw error;
+
+  return new Set((data ?? []).map((r) => r.group_id).filter(Boolean));
+}
+
+
