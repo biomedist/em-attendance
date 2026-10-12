@@ -28,7 +28,10 @@ export default async function HomePage() {
     }
   }
 
-  const totalStudents = groups.reduce((sum, g) => sum + g.studentCount, 0);
+  const totalStudents = groups
+  .filter((g) => g.id !== "TEACHER")
+  .reduce((sum, g) => sum + g.studentCount, 0);
+  const totalTeachers = groups.find((g) => g.id === "TEACHER")?.studentCount ?? 0;
 
   return (
     <div className="flex min-h-full flex-col bg-stone-50">
@@ -36,7 +39,7 @@ export default async function HomePage() {
         title="Attendance"
         subtitle={
           groups.length > 0
-            ? `${groups.length} groups · ${totalStudents} students`
+            ? `${groups.filter(g => g.id !== "TEACHER").length} groups · ${totalStudents} students · ${totalTeachers} teachers`
             : "EM Children Ministry"
         }
       />
