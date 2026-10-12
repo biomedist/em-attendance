@@ -52,7 +52,7 @@ type DbAttendance = {
   status: AttendanceStatus;
 };
 
-function toGroup(row: DbGroup, studentCount: number): Group {
+function toGroup(row: DbGroup, studentCount: number, teacherCount = 0): Group {
   const style = getGroupStyle(row.id);
   const isTeacherGroup = row.id === "TEACHER";
   return {
@@ -60,6 +60,7 @@ function toGroup(row: DbGroup, studentCount: number): Group {
     name: row.name,
     teacher: row.teacher,
     studentCount,
+    teacherCount,
     badgeLabel: isTeacherGroup ? "T" : row.id,
     memberLabel: isTeacherGroup ? "teachers" : "students",
     ...style,
@@ -89,7 +90,6 @@ function toNotice(row: DbNotice): Notice {
 
 export async function fetchGroups(): Promise<Group[]> {
   if (!isSupabaseConfigured()) return [];
-
   const supabase = getSupabase();
 
   const [{ data: groups, error: groupsError }, { data: students, error: studentsError }] =
@@ -106,7 +106,12 @@ export async function fetchGroups(): Promise<Group[]> {
     return acc;
   }, {});
 
-  return (groups as DbGroup[]).map((g) => toGroup(g, counts[g.id] ?? 0));
+  // TEACHER 그룹의 인원 수
+  const teacherCount = counts["TEACHER"] ?? 0;
+
+  return (groups as DbGroup[]).map((g) =>
+    toGroup(g, counts[g.id] ?? 0, g.id === "TEACHER" ? teacherCount : 0)
+  );
 }
 
 export async function fetchGroupById(groupId: string): Promise<Group | null> {
