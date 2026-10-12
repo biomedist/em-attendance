@@ -272,3 +272,48 @@ export async function reorderStudents(
   if (failed?.error) return { ok: false, error: failed.error.message };
   return { ok: true };
 }
+
+export async function upgradeAllGrades(): Promise<{ ok: boolean; error?: string; updatedCount?: number }> {
+  if (!isSupabaseConfigured()) return { ok: false, error: "Supabase is not configured" };
+  const supabase = getSupabase();
+
+  const gradeMap: Record<string, string> = {
+    "K": "1st",
+    "1st": "2nd",
+    "2nd": "3rd",
+    "3rd": "4th",
+    "4th": "5th",
+    "5th": "6th",
+    "6th": "7th",
+    "7th": "8th",
+    "8th": "9th",
+    "9th": "10th",
+    "10th": "11th",
+    "11th": "12th",
+  };
+
+  const { data: students, error: fetchError } = await supabase
+    .from("students")
+    .select("id, grade")
+    .eq("active", true)
+    .not("grade", "is", null);
+
+  if (fetchError) return { ok: false, error: fetchError.message };
+
+  const toUpdate = (students ?? []).filter((s) => s.grade && gradeMap[s.grade]);
+
+  if (toUpdate.length === 0) return { ok: true, updatedCount: 0 };
+
+  const results = await Promise.all(
+    toUpdate.map((s) =>
+      supabase.from("students").update({ grade: gradeMap[s.grade!] }).eq("id", s.id)
+    )
+  );
+
+  const failed = results.find((r) => r.error);
+  if (failed?.error) return { ok: false, error: failed.error.message };
+
+  revalidatePath("/groups/manage");
+  revalidatePath("/");
+  return { ok: true, updatedCount: toUpdate.length };
+}
