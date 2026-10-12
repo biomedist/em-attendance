@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addGroup, removeGroup, updateGroupName, updateGroupTeacher } from "@/app/actions";
+import { addGroup, removeGroup, updateGroupName, updateGroupTeacher, upgradeAllGrades } from "@/app/actions";
 import type { Group } from "@/lib/types";
 
 export function ManageGroupsForm({ groups }: { groups: Group[] }) {
