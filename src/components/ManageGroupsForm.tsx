@@ -11,7 +11,31 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
   const [newTeacher, setNewTeacher] = useState("");
   const [nameEdits, setNameEdits] = useState<Record<string, string>>({});
   const [teacherEdits, setTeacherEdits] = useState<Record<string, string>>({});
+  const [upgradeResult, setUpgradeResult] = useState<string | null>(null);
 
+function handleUpgradeGrades() {
+  if (!confirm(
+    "Upgrade all students' grades by one year?\n\n" +
+    "K → 1st → 2nd → ... → 12th\n\n" +
+    "This action cannot be undone. Are you sure?"
+  )) return;
+
+  // 2차 확인
+  if (!confirm(
+    "Final confirmation: This will update ALL active students' grades.\n\n" +
+    "Click OK to proceed."
+  )) return;
+
+  startTransition(async () => {
+    const result = await upgradeAllGrades();
+    if (result.ok) {
+      setUpgradeResult(`✓ ${result.updatedCount} students' grades upgraded successfully.`);
+    } else {
+      setUpgradeResult(`Error: ${result.error}`);
+    }
+  });
+}
+  
   function handleAdd() {
     if (!newId.trim() || !newName.trim()) return;
     startTransition(async () => {
@@ -83,6 +107,28 @@ export function ManageGroupsForm({ groups }: { groups: Group[] }) {
         </div>
       ))}
 
+            {/* 학년 일괄 업그레이드 */}
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <p className="text-sm font-semibold text-amber-900">Grade Upgrade</p>
+        <p className="mt-1 text-xs text-amber-700">
+          Advance all active students up one grade level (K→1st, 1st→2nd, ...).
+          Use at the start of each new school year.
+        </p>
+        {upgradeResult && (
+          <p className={`mt-2 text-xs font-medium ${upgradeResult.startsWith("✓") ? "text-emerald-700" : "text-red-600"}`}>
+            {upgradeResult}
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={handleUpgradeGrades}
+          disabled={isPending}
+          className="mt-3 w-full rounded-lg bg-amber-500 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:opacity-60"
+        >
+          Upgrade All Grades →
+        </button>
+      </div>
+      
       <div className="rounded-xl border border-dashed border-stone-300 p-3">
         <p className="mb-2 text-sm font-semibold text-stone-700">+ New Group</p>
         <div className="space-y-2">
